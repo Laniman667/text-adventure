@@ -85,6 +85,11 @@ def adventure_path():
     max_hp = 100
     max_energy = max_hp * 2
     hp = [max_hp]
+    if hp = [0] <= 0:
+        cool_print("You have 0 HP. Game over!")
+        return
+    cheat_code_die = max_hp - 100
+    #work on cheat codes later
     energy = [max_energy]
     while True:
         cool_print("you're in a dark room, you see two paths, one to the left and one to the right.")
@@ -110,9 +115,10 @@ def adventure_path():
             if ForR == "fight":
                 monster_hp = 100
                 cool_print("Do you dodge left or right?")
-                dodge = get_input_with_inventory("left or right: ", inventory, hp, energy, max_hp, max_energy)
+                dodge = get_input_with_inventory("left (30 energy) or right (30 energy): ", inventory, hp, energy, max_hp, max_energy)
                 if dodge == "left":
                     monster_hp //= 2
+                    energy = [max(0, energy[0] - 30)]
                     cool_print(f"You dodge left and take no damage! You hit the monster for {monster_hp} damage (half its HP)!")
                     cool_print("it starts to attack you again, do you run towards it or jump back? ")
                     action = get_input_with_inventory("run or jump: ", inventory, hp, energy, max_hp, max_energy)
@@ -150,7 +156,7 @@ def adventure_path():
             break
 
 # Opening message with effect
-cool_print("Actions: Type 'inventory' at any prompt to see your current items, type \"use (item_name)\" to use an item if applicable. type \"equip (item_name)\" to equip items (like swords). At certain points you can sleep, sleeping will restore 1/2 of your HP and all of your energy, sleeping can leave you vulnerable to monsters, so be carful!")
+cool_print("Actions: Type 'inventory' at any prompt to see your current items, type \"use (item_name)\" to use an item if applicable. type \"equip (item_name)\" to equip items (like swords). At certain points you can sleep, sleeping will restore 1/2 of your HP and all of your energy, sleeping can leave you vulnerable to monsters, so be careful!")
 cool_print("how is your day?")
 choice = input("(good or bad): ")
 
