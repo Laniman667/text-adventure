@@ -2,6 +2,12 @@ import string
 import time
 import random
 
+def cool_print(text, delay=0.05):
+    for ch in text:
+        print(ch, end='', flush=True)
+        time.sleep(delay)
+    print()
+
 items = [
     f"money ({random.randint(1, 100)})",
     "book",
@@ -16,173 +22,148 @@ items = [
     "helmet",
     "unicorn",
     "vanilla ice cream",
-    "key"
+    "key",
+    "apple",
+    "pizza",
+    "chocolate bar",
+    "soda",
+    "candy cane",
+    "energy drink",
+    "cake"
 ]
 
-# Opening message with effect
-text = "how is your day?"
-output = ""
-for target_ch in text:
-    for ch in string.printable:
-        print(f"Trying: {output + ch}", end='\r')
-        time.sleep(0.001)
-        if ch == target_ch:
-            output += ch
-            break
-print(f"\nFinal output: {output}")
+# Food items and their heal/energy values
+food_items = {
+    "burger (20HP, 10eng)":      {"hp": 20, "energy": 10},
+    "vanilla ice cream (10HP, 25eng)": {"hp": 10, "energy": 25},
+    "apple (5HP, 10eng)":       {"hp": 5,  "energy": 10},
+    "pizza (15HP 15eng)":       {"hp": 15, "energy": 15},
+    "chocolate bar (0HP 40eng)": {"hp": 0, "energy": 40},  # sugary
+    "soda (0HP, 50eng)":        {"hp": 0,  "energy": 50},  # very sugary
+    "candy cane (5HP 60eng)":  {"hp": 5,  "energy": 60},  # very sugary
+    "energy drink (0HP, 80eng)": {"hp": 0, "energy": 80},  # super sugary
+    "cake (15HP 60eng)":        {"hp": 10, "energy": 60}
+}
 
-# Good or bad choice
+def get_input_with_inventory(prompt, inventory, hp, energy, max_hp, max_energy):
+    while True:
+        print(f"HP: {hp[0]}/{max_hp} | Energy: {energy[0]}/{max_energy}")
+        user_input = input(prompt)
+        if user_input.lower() == "inventory":
+            cool_print(f"Your inventory: {inventory}")
+        elif user_input.lower().startswith("use "):
+            item_to_use = user_input[4:].strip().lower()
+            found = None
+            for item in inventory:
+                if item.lower() == item_to_use:
+                    found = item
+                    break
+            if found:
+                if found in food_items:
+                    heal = food_items[found]["hp"]
+                    energize = food_items[found]["energy"]
+                    old_hp = hp[0]
+                    old_energy = energy[0]
+                    hp[0] = min(hp[0] + heal, max_hp)
+                    energy[0] = min(energy[0] + energize, max_energy)
+                    inventory.remove(found)
+                    msg = f"You eat the {found}."
+                    if heal > 0:
+                        msg += f" Healed {hp[0] - old_hp} HP."
+                    if energize > 0:
+                        msg += f" Restored {energy[0] - old_energy} energy."
+                    cool_print(msg + f" (HP: {hp[0]}/{max_hp}, Energy: {energy[0]}/{max_energy})")
+                else:
+                    cool_print(f"You can't use the {found} right now.")
+            else:
+                cool_print(f"You don't have a {item_to_use}.")
+        else:
+            return user_input
+
+def adventure_path():
+    inventory = []
+    max_hp = 100
+    max_energy = max_hp * 2
+    hp = [max_hp]
+    energy = [max_energy]
+    while True:
+        cool_print("you're in a dark room, you see two paths, one to the left and one to the right.")
+        choice = get_input_with_inventory(" left or right: ", inventory, hp, energy, max_hp, max_energy)
+
+        if choice == "left":
+            cool_print("you walk down the left path and find a treasure chest!")
+            found_item = random.choice(items)
+            inventory.append(found_item)
+            if found_item.startswith("money"):
+                amount = found_item.split("(")[1].split(")")[0]
+                cool_print(f"you open the treasure chest and find {amount} gold coins! You win!")
+            else:
+                num_items = random.randint(1, 3)
+                found_items = random.sample(items, num_items)
+                inventory.extend(found_items)
+                cool_print(f"You open the treasure chest and find: {', '.join(found_items)}!") 
+            cool_print(f"Your inventory: {inventory}")
+        elif choice == "right":
+            cool_print("you walk down the right path and encounter a monster!")
+            cool_print("The monster starts to attack you, do you fight or run?")
+            ForR = get_input_with_inventory("fight or run: ", inventory, hp, energy, max_hp, max_energy)
+            if ForR == "fight":
+                monster_hp = 100
+                cool_print("Do you dodge left or right?")
+                dodge = get_input_with_inventory("left or right: ", inventory, hp, energy, max_hp, max_energy)
+                if dodge == "left":
+                    monster_hp //= 2
+                    cool_print(f"You dodge left and take no damage! You hit the monster for {monster_hp} damage (half its HP)!")
+                    cool_print("it starts to attack you again, do you run towards it or jump back? ")
+                    action = get_input_with_inventory("run or jump: ", inventory, hp, energy, max_hp, max_energy)
+                    if action == "run":
+                        cool_print("You run towards the monster and it kicks you! You lose!")
+                        hp[0] = 0
+                    elif action == "jump":
+                        cool_print("You jump back and the monster misses! You hit it again and defeat it!")
+                        # Maybe restore some energy for a win
+                        energy[0] = min(energy[0] + 20, max_energy)
+                    else:
+                        cool_print("Invalid choice. Restarting...")
+                elif dodge == "right":
+                    cool_print("You dodge right and the monster hits you! You lose!")
+                    hp[0] = 0
+                else:
+                    cool_print("Invalid choice.")
+            elif ForR == "run":
+                cool_print("you try to run away but the monster is faster! You lose!")
+                hp[0] = 0
+            else:
+                cool_print("Invalid choice. Bye!")
+        else:
+            cool_print("Invalid choice. Bye!")
+            break
+
+        if hp[0] <= 0:
+            cool_print("You have 0 HP. Game over!")
+            break
+
+        again = get_input_with_inventory("Do you want to continue down this path or turn back and try the other path? (continue/turn back): ", inventory, hp, energy, max_hp, max_energy)
+        if again.lower() == "turn back":
+            continue
+        else:
+            break
+
+# Opening message with effect
+cool_print("Actions: Type 'inventory' at any prompt to see your current items, type \"use (item_name)\" to use an item if applicable. type \"equip (item_name)\" to equip items (like swords). At certain points you can sleep, sleeping will restore 1/2 of your HP and all of your energy, sleeping can leave you vulnerable to monsters, so be carful!")
+cool_print("how is your day?")
 choice = input("(good or bad): ")
 
 if choice == "good":
-    text2 = "thats great!"
-    output2 = ""
-    for target_ch in text2:
-        for ch in string.printable:
-            print(f"Trying: {output2 + ch}", end='\r')
-            time.sleep(0.0005)
-            if ch == target_ch:
-                output2 += ch
-                break
-    print(f"\nFinal output: {output2}")
-
-    # Username prompt with effect
-    text3 = "make a name for your character:"
-    output3 = ""
-    for target_ch in text3:
-        for ch in string.printable:
-            print(f"Trying: {output3 + ch}", end='\r')
-            time.sleep(0.001)
-            if ch == target_ch:
-                output3 += ch
-                break
-    print(f"\nFinal output: {output3}")
-    username = input()  # Let the user type their name
-
-    welcome_text = f"Welcome, {username}! Lets begin!"
-    welcome_output = ""
-    for target_ch in welcome_text:
-        for ch in string.printable:
-            print(f"Trying: {welcome_output + ch}", end='\r')
-            time.sleep(0.0005)
-            if ch == target_ch:
-                welcome_output += ch
-                break
-    print(f"\nFinal output: {welcome_output}")
-
+    cool_print("thats great!", delay=0.0005)
+    cool_print("make a name for your character:")
+    username = input()
+    cool_print(f"Welcome, {username}! Lets begin!", delay=0.0005)
 elif choice == "bad":
-    text2 = "oh no! Well maybe wait to play the game later."
-    output2 = ""
-    for target_ch in text2:
-        for ch in string.printable:
-            print(f"Trying: {output2 + ch}", end='\r')
-            time.sleep(0.001)
-            if ch == target_ch:
-                output2 += ch
-                break
-    print(f"\nFinal output: {output2}")
+    cool_print("oh no! Well maybe wait to play the game later.")
+    exit()
 else:
-    print("Invalid choice. Bye!")
+    cool_print("Invalid choice. Bye!")
     exit()
 
-# Adventure path
-print("you're in a dark room, you see two paths, one to the left and one to the right.")
-choice = input(" left or right: ")
-
-inventory = []  # Create an empty inventory list
-
-if choice == "left":
-    text3 = "you walk down the left path and find a treasure chest!"
-    output3 = ""
-    for target_ch in text3:
-        for ch in string.printable:
-            print(f"Trying: {output3 + ch}", end='\r')
-            time.sleep(0.001)
-            if ch == target_ch:
-                output3 += ch
-                break
-    print(f"\nFinal output: {output3}")
-
-    # Give a random item from the list
-    found_item = random.choice(items)
-    inventory.append(found_item)  # Add the found item to the inventory
-
-    if found_item.startswith("money"):
-        amount = found_item.split("(")[1].split(")")[0]
-        text4 = f"you open the treasure chest and find {amount} gold coins! You win!"
-    else:
-        text4 = f"you open the treasure chest and find a {found_item}! You win!"
-    output4 = ""
-    for target_ch in text4:
-        for ch in string.printable:
-            print(f"Trying: {output4 + ch}", end='\r')
-            time.sleep(0.001)
-            if ch == target_ch:
-                output4 += ch
-                break
-    print(f"\nFinal output: {output4}")
-
-    # Show inventory to the user
-    print(f"Your inventory: {inventory}")
-
-elif choice == "right":
-    text3 = "you walk down the right path and encounter a monster!"
-    output3 = ""
-    for target_ch in text3:
-        for ch in string.printable:
-            print(f"Trying: {output3 + ch}", end='\r')
-            time.sleep(0.001)
-            if ch == target_ch:
-                output3 += ch
-                break
-    print(f"\nFinal output: {output3}")
-
-    text4 = "The monster starts to attack you, do you fight or run?"
-    output4 = ""
-    for target_ch in text4:
-        for ch in string.printable:
-            print(f"Trying: {output4 + ch}", end='\r')
-            time.sleep(0.001)
-            if ch == target_ch:
-                output4 += ch
-                break
-    print(f"\nFinal output: {output4}")
-
-    ForR = input("fight or run: ")
-    if ForR == "fight":
-        monster_hp = 100
-
-        text5 = "Do you dodge left or right?"
-        output5 = ""
-        for target_ch in text5:
-            for ch in string.printable:
-                print(f"Trying: {output5 + ch}", end='\r')
-                time.sleep(0.001)
-                if ch == target_ch:
-                    output5 += ch
-                    break
-        print(f"\nFinal output: {output5}")
-
-        dodge = input("left or right: ")
-        if dodge == "left":
-            monster_hp //= 2
-            print(f"You dodge left and take no damage! You hit the monster for {monster_hp} damage (half its HP)!")
-        elif dodge == "right":
-            print("You dodge right and the monster hits you! You lose!")
-        else:
-            print("Invalid choice.")
-    elif ForR == "run":
-        text6 = "you try to run away but the monster is faster! You lose!"
-        output6 = ""
-        for target_ch in text6:
-            for ch in string.printable:
-                print(f"Trying: {output6 + ch}", end='\r')
-                time.sleep(0.001)
-                if ch == target_ch:
-                    output6 += ch
-                    break
-        print(f"\nFinal output: {output6}")
-    else:
-        print("Invalid choice. Bye!")
-else:
-    print("Invalid choice. Bye!")
+adventure_path()
