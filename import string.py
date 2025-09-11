@@ -85,7 +85,7 @@ def adventure_path():
     max_hp = 100
     max_energy = max_hp * 2
     hp = [max_hp]
-    if hp = [0] <= 0:
+    if hp == [0] <= 0:
         cool_print("You have 0 HP. Game over!")
         return
     cheat_code_die = max_hp - 100
